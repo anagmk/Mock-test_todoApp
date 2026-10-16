@@ -5,14 +5,14 @@ import jwt from 'jsonwebtoken'
 export const signup = async (req, res) => {
     try {
         const { name, email, password } = req.body
-        if (!name, !email, !password) {
-            return res.status(401).json("required details")
-        }
-        console.log(name, email, password)
 
-        const userExist = await User.find({ email })
-        if (!userExist) {
-            return res.status(401).json("user already exist please login")
+        if (!name || !email || !password) {
+            return res.status(400).json("required details")
+        }
+
+        const existingUser = await User.findOne({ email })
+        if (existingUser) {
+            return res.status(409).json("user already exists please login")
         }
 
         const hashPassword = await bcrypt.hash(password, 10)
@@ -28,7 +28,7 @@ export const signup = async (req, res) => {
         return res.status(201).json("user signup successfully")
     } catch (error) {
         console.log(error)
-        return res.status(401).json("internal server error")
+        return res.status(500).json("internal server error")
     }
 
 }
@@ -36,7 +36,7 @@ export const signup = async (req, res) => {
 export const login = async (req, res) => {
     try {
         const { email, password } = req.body
-        if (!email, !password) {
+        if (!email || !password) {
             return res.status(401).json("required details")
         }
 
@@ -51,7 +51,7 @@ export const login = async (req, res) => {
 
         }
         const token = jwt.sign(
-            { userId: user.id, email: user.email },
+            { userId: user._id.toString(), email: user.email },
             process.env.JWT_SECRET,
             { expiresIn: '1h' }
         );
